@@ -1,8 +1,5 @@
 # LocalHub Backend
 
-| [🏠 README](./README.md) | [🤝 협업 및 Git 규칙](./CONTRIBUTING.md) |
-|---|---|
-
 서울 공공데이터를 기반으로 지역정보, 익명 커뮤니티, 축제 캘린더, 날씨 및 챗봇 기능을 제공하는 LocalHub의 백엔드 프로젝트입니다.
 
 FastAPI 기반 REST API 서버로 구성되며, SQLAlchemy와 SQLite를 사용하여 데이터를 관리합니다.
