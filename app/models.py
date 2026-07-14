@@ -1,16 +1,7 @@
-from sqlalchemy import Boolean, Column, Integer, String, Float, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, Float, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from .db import Base
-
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    is_active = Column(Boolean, default=True)
-
 
 class Location(Base):
     __tablename__ = "locations"
@@ -44,3 +35,24 @@ class Location(Base):
     source_modified_at = Column(String, nullable=True)              # 원본: modifiedtime (원본 최종 수정 시각, TEXT)
     source_file = Column(String, nullable=True)                     # 파일명적재 출처 JSON 파일명
     imported_at = Column(DateTime, nullable=False, default=datetime.utcnow)  # SQLite 적재 시각
+
+
+class Post(Base):
+    __tablename__ = "posts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    category = Column(String, nullable=False)                       # 관광지·문화시설·자유 등
+    title = Column(String, nullable=False)                          # 게시글 제목
+    content = Column(Text, nullable=False)                          # 게시글 본문
+    edit_password = Column(String, nullable=False)                  # 수정·삭제용 비밀번호
+    view_count = Column(Integer, nullable=False, default=0)         # 조회수
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)                     # 작성 시각
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)  # 수정 시각
+
+class PostTag(Base):
+    __tablename__ = "post_tags"
+
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True)
+    tag = Column(Text, primary_key=True)
+
+    post = relationship("Post", back_populates="tags")
