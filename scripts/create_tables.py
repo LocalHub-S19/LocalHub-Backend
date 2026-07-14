@@ -1,5 +1,5 @@
-from app.db import engine, Base
-import app.models  # ensure models are imported so metadata populated
+from app.db.database import engine, Base
+import app.db.models
 
 Base.metadata.create_all(bind=engine)
 print("tables created")

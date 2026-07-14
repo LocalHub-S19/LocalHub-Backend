@@ -1,7 +1,7 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./localhub.db"
+    DATABASE_URL: str = "sqlite:///./data/localhub.db"
     ENV: str = "development"
 
     class Config:
