@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from __future__ import annotations
 
 from functools import lru_cache
@@ -7,19 +6,9 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# LocalHub-Backend 프로젝트 최상위 경로
-BASE_DIR = Path(__file__).resolve().parents[2]
-
-
-class Settings(BaseSettings):
-    """LocalHub 백엔드 공통 환경설정."""
-=======
-from pydantic_settings import BaseSettings
-
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./data/localhub.db"
     ENV: str = "development"
->>>>>>> 87425f4ab952f265aa84a7c92ec42bbe72f6e4d7
 
     # 애플리케이션 설정
     app_name: str = "LocalHub API"
