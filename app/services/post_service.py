@@ -102,7 +102,7 @@ class PostService:
             size = 20
 
         page = max(1, page)
-        size = max(1, min(20, size))
+        size = max(1, min(200, size))
 
         posts, total = PostRepository.find_all(
             db=self.db,
