@@ -121,11 +121,11 @@ class PostRepository:
         if sort == "views":
             order_conditions = [
                 Post.view_count.desc(),
-                Post.created_at.desc(),
+                Post.updated_at.desc(),
             ]
         else:
             order_conditions = [
-                Post.created_at.desc(),
+                Post.updated_at.desc(),
             ]
 
         offset = (page - 1) * size
@@ -139,7 +139,8 @@ class PostRepository:
 
         statement = select(Post).options(selectinload(Post.tags))
         if filters:
-            statement = statement.where(*filters).order_by(*order_conditions).offset(offset).limit(size)
+            statement = statement.where(*filters)
+        statement = statement.order_by(*order_conditions).offset(offset).limit(size)
 
         posts = list(db.scalars(statement).all())
 
