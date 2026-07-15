@@ -1,5 +1,17 @@
+"""
+[수정 파일] 챗봇 요청·응답 스키마
+
+변경 사항
+1. [유지] 기존 message, history, answer, references 구조
+2. [추가] 참고 장소의 전화번호·좌표 필드
+3. [추가] 참고 게시글의 본문 요약·태그·작성 시각 필드
+4. [유지] 기존 프론트엔드가 사용하던 type, id, title,
+   category, address 필드는 그대로 유지
+"""
+
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import (
@@ -116,6 +128,43 @@ class ChatReference(BaseModel):
         examples=["서울특별시 종로구 새문안로 55"],
     )
 
+    # [추가] 장소 검색 결과를 프론트에서 바로 활용할 수 있는 정보
+    tel: str | None = Field(
+        default=None,
+        description="지역정보의 전화번호",
+        examples=["02-1234-5678"],
+    )
+
+    latitude: float | None = Field(
+        default=None,
+        description="지역정보의 위도",
+        examples=[37.5704],
+    )
+
+    longitude: float | None = Field(
+        default=None,
+        description="지역정보의 경도",
+        examples=[126.9779],
+    )
+
+    # [추가] 게시글 검색 결과를 프론트에서 보여줄 때 사용하는 정보
+    snippet: str | None = Field(
+        default=None,
+        description="게시글 본문 일부",
+        examples=["평일 저녁에 방문했는데 야경이 좋았습니다."],
+    )
+
+    tags: list[str] = Field(
+        default_factory=list,
+        description="게시글에 연결된 태그 목록",
+        examples=[["남산", "야경"]],
+    )
+
+    created_at: datetime | None = Field(
+        default=None,
+        description="게시글 작성 시각",
+    )
+
 
 class ChatResponse(BaseModel):
     """챗봇 답변 응답."""
@@ -129,5 +178,5 @@ class ChatResponse(BaseModel):
 
     references: list[ChatReference] = Field(
         default_factory=list,
-        description="답변 생성에 참고한 지역정보 및 게시글",
+        description="답변 생성에 실제로 참고한 지역정보 및 게시글",
     )
