@@ -26,7 +26,6 @@ test.db
 data/*.db
 data/*.sqlite
 data/*.sqlite3
-
 # 로그
 *.log
 
