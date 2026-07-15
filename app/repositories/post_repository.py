@@ -1,3 +1,4 @@
+from unittest import result
 from warnings import filters
 
 from sqlalchemy import func, or_, select, update
@@ -138,7 +139,8 @@ class PostRepository:
 
         statement = select(Post).options(selectinload(Post.tags))
         if filters:
-            statement = statement.where(*filters).order_by(*order_conditions).offset(offset).limit(size)
+            statement = statement.where(*filters)
+        statement = statement.order_by(*order_conditions).offset(offset).limit(size)
 
         posts = list(db.scalars(statement).all())
 
@@ -235,12 +237,19 @@ class PostRepository:
         db: Session,
         post_id: int,
     ) -> Post | None:
-        """게시글 조회수를 1 증가시킨다."""
+        """게시글 조회수를 1 증가시킨다 without modifying updated_at."""
+
+        current_updated_at = db.scalar(
+            select(Post.updated_at).where(Post.id == post_id)
+        )
 
         statement = (
             update(Post)
             .where(Post.id == post_id)
-            .values(view_count=Post.view_count + 1)
+            .values(
+                view_count=Post.view_count + 1,
+                updated_at=current_updated_at,
+            )
         )
 
         result = db.execute(statement)
