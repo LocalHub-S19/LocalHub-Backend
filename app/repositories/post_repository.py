@@ -121,11 +121,11 @@ class PostRepository:
         if sort == "views":
             order_conditions = [
                 Post.view_count.desc(),
-                Post.updated_at.desc(),
+                Post.created_at.desc(),
             ]
         else:
             order_conditions = [
-                Post.updated_at.desc(),
+                Post.created_at.desc(),
             ]
 
         offset = (page - 1) * size
