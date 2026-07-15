@@ -582,6 +582,12 @@ class ChatService:
                     category=location.category,
                     address=address,
                     tel=location.tel,
+                    # [추가] 작은 썸네일을 우선 사용하고,
+                    # 없으면 원본 대표 이미지를 사용한다.
+                    image_url=(
+                        location.thumbnail_image
+                        or location.first_image
+                    ),
                     latitude=location.latitude,
                     longitude=location.longitude,
                 )

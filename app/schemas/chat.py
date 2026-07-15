@@ -3,9 +3,10 @@
 
 변경 사항
 1. [유지] 기존 message, history, answer, references 구조
-2. [추가] 참고 장소의 전화번호·좌표 필드
-3. [추가] 참고 게시글의 본문 요약·태그·작성 시각 필드
-4. [유지] 기존 프론트엔드가 사용하던 type, id, title,
+2. [유지] 참고 장소의 전화번호·좌표 필드
+3. [추가] 참고 장소의 대표 이미지 URL 필드
+4. [유지] 참고 게시글의 본문 요약·태그·작성 시각 필드
+5. [유지] 기존 프론트엔드가 사용하던 type, id, title,
    category, address 필드는 그대로 유지
 """
 
@@ -133,6 +134,13 @@ class ChatReference(BaseModel):
         default=None,
         description="지역정보의 전화번호",
         examples=["02-1234-5678"],
+    )
+
+    # [추가] 챗봇 장소 카드에 표시할 대표 이미지 URL
+    image_url: str | None = Field(
+        default=None,
+        description="지역정보의 대표 이미지 또는 썸네일 URL",
+        examples=["https://tong.visitkorea.or.kr/cms/resource/..."],
     )
 
     latitude: float | None = Field(
