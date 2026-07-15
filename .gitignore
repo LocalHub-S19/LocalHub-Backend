@@ -26,6 +26,8 @@ test.db
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+data/*
+!data/localhub.db
 
 # 로그
 *.log
