@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import Literal
+from datetime import datetime, timezone, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -23,34 +24,40 @@ class PostService:
 
     def __init__(self, db: Session) -> None:
         """DB 세션을 저장한다."""
-
         self.db = db
 
     @staticmethod
     def _extract_tags(
         post: Post,
     ) -> list[str]:
-        """PostTag 객체 목록에서 태그 문자열만 추출한다."""
-
         return [
             post_tag.tag
             for post_tag in post.tags
         ]
 
     @staticmethod
+    def _kst_min(dt: datetime | None) -> datetime | None:
+        """UTC/aware datetime -> KST, remove seconds/microseconds, return naive KST datetime."""
+        if dt is None:
+            return None
+        kst = timezone(timedelta(hours=9))
+        kst_dt = dt.astimezone(kst)
+        kst_dt = kst_dt.replace(second=0, microsecond=0, tzinfo=None)
+        return kst_dt
+
+    @staticmethod
     def _to_list_item(
         post: Post,
     ) -> PostListItemResponse:
         """Post 모델을 게시글 목록 응답으로 변환한다."""
-
         return PostListItemResponse(
             id=post.id,
             category=post.category,
             title=post.title,
             tags=PostService._extract_tags(post),
             view_count=post.view_count,
-            created_at=post.created_at,
-            updated_at=post.updated_at,
+            created_at=PostService._kst_min(post.created_at),
+            updated_at=PostService._kst_min(post.updated_at),
         )
 
     @staticmethod
@@ -58,7 +65,6 @@ class PostService:
         post: Post,
     ) -> PostDetailResponse:
         """Post 모델을 게시글 상세 응답으로 변환한다."""
-
         return PostDetailResponse(
             id=post.id,
             category=post.category,
@@ -66,8 +72,8 @@ class PostService:
             content=post.content,
             tags=PostService._extract_tags(post),
             view_count=post.view_count,
-            created_at=post.created_at,
-            updated_at=post.updated_at,
+            created_at=PostService._kst_min(post.created_at),
+            updated_at=PostService._kst_min(post.updated_at),
         )
 
     def get_posts(
@@ -81,14 +87,22 @@ class PostService:
     ) -> PostListResponse:
         """
         게시글 목록을 조회한다.
-
-        지원 기능:
-        - 카테고리 필터
-        - 제목·내용·태그 통합 검색
-        - 특정 태그 필터
-        - 최신순·조회수순 정렬
-        - 페이지네이션
+        - 페이지/사이즈 방어: page >= 1, 1 <= size <= 100
+        - 반환되는 날짜는 KST, 분 단위(초 제거)인 naive datetime
         """
+
+        # 방어적 입력 정리
+        try:
+            page = int(page)
+        except Exception:
+            page = 1
+        try:
+            size = int(size)
+        except Exception:
+            size = 20
+
+        page = max(1, page)
+        size = max(1, min(20, size))
 
         posts, total = PostRepository.find_all(
             db=self.db,
@@ -124,7 +138,6 @@ class PostService:
         request: PostCreateRequest,
     ) -> PostDetailResponse:
         """익명 게시글과 태그를 생성한다."""
-
         post = PostRepository.create(
             db=self.db,
             category=request.category,
@@ -133,7 +146,6 @@ class PostService:
             password=request.password,
             tags=request.tags,
         )
-
         return self._to_detail_response(post)
 
     def get_post_detail(
@@ -141,7 +153,6 @@ class PostService:
         post_id: int,
     ) -> PostDetailResponse:
         """게시글 상세정보를 조회하고 조회수를 1 증가시킨다."""
-
         post = PostRepository.increase_view_count(
             db=self.db,
             post_id=post_id,
@@ -161,7 +172,6 @@ class PostService:
         request: PostUpdateRequest,
     ) -> PostDetailResponse:
         """비밀번호 확인 후 게시글 내용과 태그를 수정한다."""
-
         post = PostRepository.find_by_id(
             db=self.db,
             post_id=post_id,
@@ -173,8 +183,6 @@ class PostService:
                 detail="해당 게시글을 찾을 수 없습니다.",
             )
 
-        # 의뢰서 요구사항에 따라 작성 시 등록한 비밀번호를
-        # 평문 상태로 직접 비교한다.
         if post.edit_password != request.password:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -200,7 +208,6 @@ class PostService:
         request: PostDeleteRequest,
     ) -> None:
         """비밀번호 확인 후 게시글과 연결된 태그를 삭제한다."""
-
         post = PostRepository.find_by_id(
             db=self.db,
             post_id=post_id,
