@@ -1,6 +1,10 @@
+from warnings import filters
+
 from sqlalchemy import func, or_, select, update
+from datetime import timezone, timedelta
 from sqlalchemy.orm import Session, selectinload
 
+from app import db
 from app.db.models.post import Post
 from app.db.models.post_tag import PostTag
 
@@ -42,7 +46,45 @@ class PostRepository:
             )
 
         return filters
+    
+    @staticmethod
+    def _format_dt_min(dt) -> str | None:
+        if dt is None:
+            return None
+        kst = timezone(timedelta(hours=9))
+        return dt.astimezone(kst).strftime("%Y-%m-%d %H:%M")
 
+    @staticmethod
+    def serialize_post(post: Post) -> dict:
+        return {
+            "id": post.id,
+            "category": post.category,
+            "title": post.title,
+            "content": post.content,
+            "view_count": post.view_count,
+            "created_at": PostRepository._format_dt_min(post.created_at),
+            "updated_at": PostRepository._format_dt_min(post.updated_at),
+            "tags": [t.tag for t in post.tags] if post.tags else [],
+        }
+
+    @staticmethod
+    def list_response(
+        posts: list[Post],
+        total: int,
+        page: int,
+        size: int,
+    ) -> dict:
+        return {
+            "items": [PostRepository.serialize_post(p) for p in posts],
+            "total": total,
+            "page": page,
+            "size": size,
+        }
+
+    @staticmethod
+    def single_response(post: Post) -> dict:
+        return {"item": PostRepository.serialize_post(post)}
+    
     @staticmethod
     def find_all(
         db: Session,
@@ -70,11 +112,9 @@ class PostRepository:
             tag=tag,
         )
 
-        count_statement = (
-            select(func.count(Post.id))
-            .where(*filters)
-        )
-
+        count_statement = select(func.count(Post.id))
+        if filters:
+            count_statement = count_statement.where(*filters)
         total = db.scalar(count_statement) or 0
 
         if sort == "views":
@@ -93,10 +133,12 @@ class PostRepository:
             select(Post)
             .options(selectinload(Post.tags))
             .where(*filters)
-            .order_by(*order_conditions)
-            .offset(offset)
-            .limit(size)
+            
         )
+
+        statement = select(Post).options(selectinload(Post.tags))
+        if filters:
+            statement = statement.where(*filters).order_by(*order_conditions).offset(offset).limit(size)
 
         posts = list(db.scalars(statement).all())
 
