@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.database_url,
     connect_args={
         "check_same_thread": False,
     },
