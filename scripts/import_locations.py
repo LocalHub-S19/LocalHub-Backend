@@ -23,7 +23,8 @@ from app.db.database import SessionLocal, create_tables
 from app.db.models.location import Location
 
 
-DEFAULT_DATA_DIR = PROJECT_ROOT / "data" / "raw"
+# 💡 수정된 부분: 기본 데이터 디렉토리를 Render의 Secret Files 경로로 변경합니다.
+DEFAULT_DATA_DIR = Path("data/raw")
 
 
 CONTENT_TYPE_NAMES: dict[str, str] = {
@@ -539,7 +540,7 @@ def main() -> int:
             f"확인한 폴더: {data_dir}"
         )
         print(
-            "서울 JSON 파일을 data/raw 폴더에 넣어주세요."
+            "서울 JSON 파일을 설정된 폴더에 넣어주세요."
         )
 
         return 1
