@@ -15,7 +15,7 @@ __pycache__/
 *.py[cod]
 
 # 원본 지역정보 데이터 제외
-# data/raw/*
+data/raw/*
 !data/raw/.gitkeep
 
 # SQLite 데이터베이스 제외
