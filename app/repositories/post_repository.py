@@ -1,3 +1,4 @@
+from unittest import result
 from warnings import filters
 
 from sqlalchemy import func, or_, select, update
@@ -235,12 +236,19 @@ class PostRepository:
         db: Session,
         post_id: int,
     ) -> Post | None:
-        """게시글 조회수를 1 증가시킨다."""
+        """게시글 조회수를 1 증가시킨다 without modifying updated_at."""
+
+        current_updated_at = db.scalar(
+            select(Post.updated_at).where(Post.id == post_id)
+        )
 
         statement = (
             update(Post)
             .where(Post.id == post_id)
-            .values(view_count=Post.view_count + 1)
+            .values(
+                view_count=Post.view_count + 1,
+                updated_at=current_updated_at,
+            )
         )
 
         result = db.execute(statement)
