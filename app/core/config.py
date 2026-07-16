@@ -3,37 +3,31 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# [수정] 프로젝트 최상위 폴더 경로
-#
-# 현재 파일:
-# LocalHub-Backend/app/core/config.py
-#
-# parents[0] = app/core
-# parents[1] = app
-# parents[2] = LocalHub-Backend
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
     """LocalHub 백엔드 공통 환경설정."""
 
-    # 애플리케이션 설정
+    # 애플리케이션
     app_name: str = "LocalHub API"
     app_version: str = "0.1.0"
     environment: str = "development"
     debug: bool = True
 
-    # 공통 API prefix
+    # API
     api_prefix: str = "/api"
 
-    # SQLite
-    # [수정] DATABASE_URL과 database_url 중복 제거
+    # Database
     database_url: str = "sqlite:///./data/localhub.db"
 
-    # Vue 개발 서버 및 배포 프론트엔드 주소
+    # CORS
+    # 로컬 기본값만 코드에 작성하고,
+    # 배포 주소는 Render의 CORS_ORIGINS 환경변수로 덮어쓴다.
     cors_origins: list[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
@@ -44,25 +38,37 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-5-mini"
 
-    # 날씨 API
-    # Open-Meteo는 API 키가 필요하지 않는다.
+    # Weather
     weather_api_key: str | None = None
     weather_api_base_url: str = (
         "https://api.open-meteo.com/v1/forecast"
     )
 
-    # 서비스 기본 설정
+    # Service
     target_region: str = "서울"
 
-    # 지도 조회 제한
+    # Map
     default_map_limit: int = 300
     max_map_limit: int = 500
 
-    # 페이지네이션 제한
+    # Pagination
     default_page_size: int = 20
     max_page_size: int = 100
 
-    # [수정] 실행 위치와 관계없이 프로젝트 루트의 .env를 읽는다.
+    @field_validator("cors_origins")
+    @classmethod
+    def normalize_cors_origins(
+        cls,
+        origins: list[str],
+    ) -> list[str]:
+        """끝의 슬래시와 공백을 제거해 Origin 비교 오류를 방지한다."""
+
+        return [
+            origin.strip().rstrip("/")
+            for origin in origins
+            if origin.strip()
+        ]
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
@@ -73,8 +79,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """환경설정을 한 번 생성한 뒤 재사용한다."""
-
     return Settings()
 
 
