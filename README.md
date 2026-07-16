@@ -1,79 +1,114 @@
 # LocalHub Backend
 
-서울 공공데이터를 기반으로 지역정보, 익명 커뮤니티, 축제 캘린더, 날씨 및 챗봇 기능을 제공하는 LocalHub의 백엔드 프로젝트입니다.
+서울 지역정보, 익명 커뮤니티, 현재 날씨, 여행 적합도와 AI 챗봇 API를 제공하는 **LocalHub 백엔드**입니다.
 
-FastAPI 기반 REST API 서버로 구성되며, SQLAlchemy와 SQLite를 사용하여 데이터를 관리합니다.
+FastAPI, SQLAlchemy, SQLite로 구성되며, 한국관광공사 TourAPI 4.0의 서울 지역 데이터를 검색 가능한 형태로 적재합니다.
 
 ---
 
 ## 📌 프로젝트 소개
 
-LocalHub는 서울의 관광지, 문화시설, 레포츠, 쇼핑, 숙박, 여행코스, 축제공연행사 정보를 한곳에서 확인할 수 있는 지역정보 공유 서비스입니다.
+LocalHub 백엔드는 다음 기능을 담당합니다.
 
-백엔드는 다음 기능을 담당합니다.
-
-- 서울 지역정보 JSON 데이터 적재 및 조회
-- 지도 마커용 위치 데이터 제공
-- 축제 일정 조회
-- 외부 날씨 API 연동
-- 여행 적합도 계산
+- 서울 지역정보 JSON을 SQLite에 적재
+- 카테고리·검색어·자치구 기반 지역정보 조회
+- 지도 마커용 좌표 데이터 제공
 - 익명 커뮤니티 게시글 CRUD
-- OpenAI API 기반 지역정보 챗봇
-- SQLite 데이터베이스 관리
-- 프론트엔드에서 사용할 REST API 제공
+- 게시글 태그, 검색, 정렬, 페이지네이션, 조회수 관리
+- Open-Meteo 기반 서울 현재 날씨 조회
+- 고정 규칙 기반 여행 적합도 계산
+- OpenAI API와 SQLite 검색을 결합한 경량 RAG 챗봇
+- Vue 프론트엔드에 REST API 제공
 
 ---
 
 ## ✨ 주요 기능
 
-### 서울 지역정보
+### 1. 서울 지역정보
+
+지원 카테고리:
 
 - 관광지
 - 문화시설
-- 레포츠
-- 쇼핑
-- 숙박
-- 여행코스
 - 축제공연행사
-- 카테고리별 목록 및 상세 조회
-- 제목·주소 기반 검색
+- 여행코스
+- 레포츠
+- 숙박
+- 쇼핑
+- 음식점
+
+지원 기능:
+
+- 목록 조회
+- 상세 조회
+- 장소명·주소 검색
+- 카테고리 필터
+- 서울 시군구 코드 필터
+- 페이지네이션
 - 지도 마커용 좌표 조회
+- 대표 이미지·썸네일·주소·전화번호 제공
 
-### 익명 커뮤니티
+### 2. 익명 커뮤니티
 
-- 게시글 목록 조회
-- 게시글 상세 조회
-- 게시글 작성
-- 게시글 수정
-- 게시글 삭제
-- 수정용 비밀번호 검증
-- 게시글 검색
-- 조회수 관리
+- 회원가입·로그인 없음
+- 게시글 작성·조회·수정·삭제
+- 작성 시 수정·삭제용 비밀번호 등록
+- 비밀번호 일치 여부 확인 후 수정·삭제
+- 카테고리, 제목, 내용, 태그 저장
+- 제목·본문·태그 통합 검색
+- 태그 필터
+- 최신순·조회수순 정렬
+- 상세 조회 시 조회수 1 증가
+- 태그 최대 5개, 태그당 최대 15자
 
-### 축제 캘린더
+> 현재 비밀번호는 교육용 의뢰사항에 따라 단순 일치 비교 방식으로 구현되어 있습니다. 실제 운영 서비스에서는 반드시 비밀번호 해시를 적용해야 합니다.
 
-- 기간별 축제 일정 조회
-- 월별 축제 일정 제공
-- 다가오는 축제 목록 제공
-- 지역정보 상세 페이지 연결용 콘텐츠 ID 제공
+### 3. 현재 날씨와 여행 적합도
 
-### 날씨 및 여행 적합도
+- Open-Meteo 현재 날씨 API 사용
+- 서울 중심 좌표 기준 조회
+- 기온
+- 체감온도
+- 습도
+- 강수량
+- 풍속
+- WMO 날씨 코드 한글 변환
+- 여행 적합도 0~100점 계산
+- `매우 좋음`, `좋음`, `보통`, `주의`, `나쁨` 등급
+- 현재 조건에 따른 관광 추천 문구
+- 타임아웃·외부 API 오류·응답 형식 오류 처리
 
-- 서울 현재 날씨 조회
-- 기온, 체감온도, 습도, 강수량, 풍속 제공
-- 날씨 조건 기반 여행 적합도 계산
-- 외부 날씨 API 오류 및 타임아웃 처리
-- 불필요한 외부 호출을 줄이기 위한 캐시 적용
+Open-Meteo는 현재 구현에서 API Key가 필요하지 않습니다.
 
-### 챗봇
+### 4. AI 챗봇
 
-- `POST /api/chat` 엔드포인트 제공
-- 서울 지역정보 검색
-- 축제 일정 검색
+`POST /api/chat`에서 다음 단계를 수행합니다.
+
+```text
+사용자 질문과 이전 대화
+        ↓
+OpenAI Structured Outputs 기반 질문 분석
+        ↓
+SQLite 지역정보·게시글 읽기 전용 검색
+        ↓
+필요한 경우 WeatherService 호출
+        ↓
+검색 결과를 근거로 OpenAI 최종 답변 생성
+        ↓
+answer + references 반환
+```
+
+지원 질문 유형:
+
+- 일반 지역정보 검색
+- 축제·공연·행사 검색
+- 모범음식점 검색
 - 커뮤니티 게시글 검색
-- 현재 날씨를 활용한 답변
-- 검색 결과 기반 OpenAI 응답 생성
-- 답변에 활용한 출처 데이터 반환
+- 서울 현재 날씨
+- 서비스 사용 안내
+- 지원 범위 밖 질문 안내
+
+챗봇은 전체 JSON을 OpenAI에 전달하지 않습니다. 먼저 SQLite에서 관련 데이터만 검색한 뒤 필요한 근거만 전달합니다.
 
 ---
 
@@ -84,42 +119,111 @@ LocalHub는 서울의 관광지, 문화시설, 레포츠, 쇼핑, 숙박, 여행
 | Language | Python |
 | Framework | FastAPI |
 | ASGI Server | Uvicorn |
-| ORM | SQLAlchemy |
+| ORM | SQLAlchemy 2 |
 | Database | SQLite |
-| Validation | Pydantic |
-| AI | OpenAI API |
-| Weather | 외부 날씨 API |
+| Validation | Pydantic 2 |
+| Settings | pydantic-settings |
+| AI | OpenAI Responses API |
+| HTTP Client | HTTPX |
+| Weather | Open-Meteo |
 | Deployment | Render |
 | IDE | Visual Studio Code |
 
 ---
 
+## 🏗️ 시스템 구조
+
+```mermaid
+flowchart LR
+    A[Vue Frontend] -->|REST API| B[FastAPI Routers]
+    B --> C[Services]
+    C --> D[Repositories]
+    D --> E[(SQLite)]
+    C --> F[Open-Meteo]
+    C --> G[OpenAI API]
+    E --> H[TourAPI 서울 지역정보]
+    E --> I[익명 게시글과 태그]
+```
+
+---
+
 ## 📁 프로젝트 구조
 
-> 프로젝트 폴더 구조는 팀 협의 후 확정하여 작성할 예정입니다.
-
 ```text
-
+LocalHub-Backend/
+├─ app/
+│  ├─ core/
+│  │  └─ config.py                   # 환경변수와 공통 설정
+│  ├─ db/
+│  │  ├─ database.py                 # 엔진, 세션, 테이블 생성
+│  │  └─ models/
+│  │     ├─ location.py              # 서울 지역정보
+│  │     ├─ post.py                  # 게시글
+│  │     └─ post_tag.py              # 게시글 태그
+│  ├─ repositories/
+│  │  ├─ location_repository.py
+│  │  ├─ post_repository.py
+│  │  └─ chat_search_repository.py   # 챗봇 전용 읽기 검색
+│  ├─ routers/
+│  │  ├─ health.py
+│  │  ├─ locations.py
+│  │  ├─ posts.py
+│  │  ├─ weather.py
+│  │  └─ chat.py
+│  ├─ schemas/
+│  │  ├─ location.py
+│  │  ├─ post.py
+│  │  ├─ weather.py
+│  │  ├─ chat.py
+│  │  └─ chat_intent.py
+│  ├─ services/
+│  │  ├─ location_service.py
+│  │  ├─ post_service.py
+│  │  ├─ weather_service.py
+│  │  └─ chat_service.py
+│  ├─ __init__.py
+│  └─ main.py
+├─ data/
+│  ├─ raw/                           # 한국관광공사 원본 JSON
+│  └─ localhub.db                    # 로컬 SQLite DB
+├─ scripts/
+│  ├─ create_tables.py
+│  ├─ import_locations.py
+│  └─ generate_mock_data.py
+├─ tests/
+│  ├─ CHAT_TEST_GUIDE.md
+│  ├─ test_chat_schema_unit.py
+│  ├─ test_chat_repository_unit.py
+│  ├─ test_chat_service_unit.py
+│  ├─ test_chat_intent_live.py
+│  ├─ test_chat_rag_live.py
+│  ├─ test_chat_api_live.py
+│  ├─ test_chat_data_precheck.py
+│  ├─ test_openai.py
+│  └─ test_post_repository.py
+├─ .env.example
+├─ .gitignore
+├─ requirements.txt
+└─ README.md
 ```
 
 ---
 
 ## ✅ 사전 요구사항
 
-프로젝트 실행 전 다음 프로그램이 설치되어 있어야 합니다.
+```text
+Python 3.11 이상 권장
+Git
+```
 
-- Python 3.11 이상 권장
-- Git
-- Visual Studio Code
-
-설치 여부를 확인합니다.
+확인:
 
 ```sh
 python --version
 git --version
 ```
 
-Windows에서 `python` 명령이 동작하지 않는 경우 다음 명령을 사용합니다.
+Windows에서 `python` 명령이 동작하지 않으면:
 
 ```powershell
 py --version
@@ -127,32 +231,25 @@ py --version
 
 ---
 
-## 🚀 Project Setup
+## 🚀 로컬 실행
 
 ### 1. 저장소 Clone
 
 ```sh
-git clone <LocalHub-Backend GitLab URL>
+git clone <LocalHub-Backend 저장소 URL>
 cd LocalHub-Backend
 ```
 
----
-
-### 2. Python 가상환경 생성
+### 2. 가상환경 생성
 
 Windows PowerShell:
 
 ```powershell
 py -m venv .venv
-```
-
-가상환경을 실행합니다.
-
-```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-PowerShell 실행 정책 오류가 발생하는 경우 현재 터미널에만 다음 설정을 적용합니다.
+PowerShell 실행 정책 오류가 발생한 경우 현재 터미널에만 허용합니다.
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
@@ -166,31 +263,16 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-가상환경이 정상적으로 활성화되면 터미널 앞에 다음과 같이 표시됩니다.
-
-```text
-(.venv)
-```
-
----
-
 ### 3. 패키지 설치
 
 ```sh
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-필요한 경우 pip를 먼저 업데이트합니다.
-
-```sh
-python -m pip install --upgrade pip
-```
-
----
-
 ### 4. 환경변수 설정
 
-프로젝트 루트의 `.env.example` 파일을 복사하여 `.env` 파일을 생성합니다.
+`.env.example`을 복사합니다.
 
 Windows PowerShell:
 
@@ -204,210 +286,193 @@ macOS 또는 Linux:
 cp .env.example .env
 ```
 
-`.env` 예시:
+권장 `.env` 예시:
 
 ```env
 APP_NAME=LocalHub API
-DATABASE_URL=sqlite:///./localhub.db
+APP_VERSION=0.1.0
+ENVIRONMENT=development
+DEBUG=true
 
-OPENAI_API_KEY=
-WEATHER_API_KEY=
+API_PREFIX=/api
+DATABASE_URL=sqlite:///./data/localhub.db
 
-CORS_ORIGINS=http://localhost:5173
+CORS_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173"]
+
+OPENAI_API_KEY=실제_OpenAI_API_Key
+OPENAI_MODEL=gpt-5-mini
+
+WEATHER_API_BASE_URL=https://api.open-meteo.com/v1/forecast
+
+TARGET_REGION=서울
+DEFAULT_MAP_LIMIT=300
+MAX_MAP_LIMIT=500
+DEFAULT_PAGE_SIZE=20
+MAX_PAGE_SIZE=100
 ```
 
-실제 API Key는 개인의 `.env` 파일에 입력합니다.
+### 환경변수 설명
 
-> `.env` 파일은 Git에 올리지 않습니다.  
-> 실제 API Key, 인증정보 및 비밀번호를 소스코드에 직접 작성하지 않습니다.
-
----
-
-## 🔐 환경변수
-
-| 환경변수 | 설명 | 필수 여부 |
+| 환경변수 | 설명 | 필수 |
 |---|---|---:|
 | `APP_NAME` | FastAPI 서비스 이름 | 선택 |
-| `DATABASE_URL` | SQLite 데이터베이스 경로 | 필수 |
-| `OPENAI_API_KEY` | OpenAI API 호출 Key | 필수 |
-| `WEATHER_API_KEY` | 외부 날씨 API Key | 필수 |
-| `CORS_ORIGINS` | 요청을 허용할 프론트엔드 주소 | 필수 |
+| `APP_VERSION` | API 버전 | 선택 |
+| `ENVIRONMENT` | 실행 환경 | 선택 |
+| `DEBUG` | 디버그 모드 | 선택 |
+| `API_PREFIX` | 공통 API 경로 | 선택 |
+| `DATABASE_URL` | SQLite 연결 주소 | 필수 |
+| `CORS_ORIGINS` | 허용할 프론트엔드 Origin의 JSON 배열 | 필수 |
+| `OPENAI_API_KEY` | 챗봇 OpenAI 호출 키 | 챗봇 사용 시 필수 |
+| `OPENAI_MODEL` | OpenAI 모델명 | 챗봇 사용 시 필수 |
+| `WEATHER_API_BASE_URL` | Open-Meteo API 주소 | 날씨 사용 시 필수 |
+| `TARGET_REGION` | 서비스 대상 지역 | 선택 |
+| `DEFAULT_MAP_LIMIT` | 기본 지도 마커 수 | 선택 |
+| `MAX_MAP_LIMIT` | 최대 지도 마커 수 | 선택 |
+| `DEFAULT_PAGE_SIZE` | 기본 페이지 크기 | 선택 |
+| `MAX_PAGE_SIZE` | 최대 페이지 크기 | 선택 |
 
-로컬 개발 환경의 CORS 주소:
-
-```env
-CORS_ORIGINS=http://localhost:5173
-```
-
-배포 환경에서는 Netlify URL을 등록합니다.
-
-```env
-CORS_ORIGINS=https://프론트엔드-서비스명.netlify.app
-```
-
-여러 주소를 허용하는 방식은 백엔드 구현 규칙에 따라 쉼표로 구분할 수 있습니다.
-
-```env
-CORS_ORIGINS=http://localhost:5173,https://프론트엔드-서비스명.netlify.app
-```
+> 현재 Open-Meteo는 API Key가 필요하지 않으므로 `WEATHER_API_KEY`는 비워둘 수 있습니다.
 
 ---
 
-## 🗄️ 데이터베이스 설정
+## 🗄️ 데이터베이스 초기화와 지역정보 적재
 
-LocalHub는 SQLite를 사용합니다.
+### 1. 테이블 생성
 
-기본 데이터베이스 주소:
+FastAPI 서버 시작 시 테이블을 자동 생성합니다.
 
-```env
-DATABASE_URL=sqlite:///./localhub.db
-```
-
-### 데이터베이스 초기화
-
-프로젝트에서 제공하는 초기화 스크립트를 실행합니다.
+수동으로 생성하려면:
 
 ```sh
-python scripts/init_db.py
+python scripts/create_tables.py
 ```
 
-### 서울 지역정보 적재
-
-제공받은 서울 JSON 데이터를 SQLite에 적재합니다.
-
-```sh
-python scripts/load_locations.py
-```
-
-스크립트 파일명과 실행 방법은 실제 구현에 따라 변경될 수 있습니다.
-
----
-
-## 📂 원본 데이터
-
-서울 지역정보 원본 JSON은 고객사가 제공한 파일을 사용합니다.
-
-대상 데이터:
+### 2. 원본 JSON 배치
 
 ```text
-서울_관광지.json
-서울_레포츠.json
-서울_문화시설.json
-서울_쇼핑.json
-서울_숙박.json
-서울_여행코스.json
-서울_축제공연행사.json
+data/raw/
+├─ 서울_관광지.json
+├─ 서울_문화시설.json
+├─ 서울_축제공연행사.json
+├─ 서울_여행코스.json
+├─ 서울_레포츠.json
+├─ 서울_숙박.json
+├─ 서울_쇼핑.json
+└─ 서울_음식점.json
 ```
 
-원본 데이터는 임의로 수정하지 않고, 필요한 필드만 SQLite에 적재합니다.
+### 3. 지역정보 적재
 
-### 주요 데이터 처리 규칙
+기존 데이터는 유지하고 신규 등록·갱신:
 
-- `contentid`는 지역정보 고유 식별자로 사용
-- `contenttypeid`는 콘텐츠 유형 구분에 사용
-- `mapx`는 경도로 변환
-- `mapy`는 위도로 변환
-- 빈 문자열 주소는 `null` 또는 정보 없음으로 처리
-- 빈 이미지 URL은 `null` 또는 기본 이미지로 처리
-- 원본 데이터의 등록일과 수정일은 축제 개최일로 사용하지 않음
-- 축제 시작일·종료일은 별도의 일정 필드가 확인된 경우에만 사용
+```sh
+python scripts/import_locations.py
+```
+
+기존 `locations` 데이터를 삭제하고 다시 적재:
+
+```sh
+python scripts/import_locations.py --reset
+```
+
+다른 원본 폴더 사용:
+
+```sh
+python scripts/import_locations.py --data-dir 경로
+```
+
+적재 스크립트 처리 규칙:
+
+- `contentid` → `content_id`
+- `contenttypeid` → `content_type_id`
+- `mapx` → `longitude`
+- `mapy` → `latitude`
+- `firstimage` → `first_image`
+- `firstimage2` → `thumbnail_image`
+- 빈 문자열 → `None`
+- 동일 `content_id`가 있으면 기존 행 갱신
+- 필수값 누락 또는 파일 안 중복 ID는 건너뜀
 
 ---
 
 ## ▶️ 개발 서버 실행
 
-다음 명령으로 FastAPI 개발 서버를 실행합니다.
-
 ```sh
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
-또는 프로젝트 설정에 따라 다음 명령을 사용할 수 있습니다.
-
-```sh
-fastapi dev app/main.py
-```
-
-기본 접속 주소:
+접속 주소:
 
 ```text
-API Server: http://localhost:8000
-Swagger:    http://localhost:8000/docs
-ReDoc:      http://localhost:8000/redoc
+API:     http://localhost:8000
+Swagger: http://localhost:8000/docs
+ReDoc:   http://localhost:8000/redoc
+Health:  http://localhost:8000/api/health
 ```
 
-서버를 종료하려면 실행 중인 터미널에서 `Ctrl + C`를 입력합니다.
+서버 종료:
 
----
-
-## ❤️ Health Check
-
-서버가 정상적으로 실행되는지 확인합니다.
-
-```http
-GET /api/health
-```
-
-응답 예시:
-
-```json
-{
-  "status": "ok"
-}
+```text
+Ctrl + C
 ```
 
 ---
 
-## 📡 주요 API
+## 📡 API
 
 ### 시스템
 
 | 기능 | Method | Endpoint |
 |---|---|---|
-| 서버 상태 확인 | GET | `/api/health` |
+| API 루트 | GET | `/` |
+| 서버 상태 | GET | `/api/health` |
 
-### 지역정보 및 지도
+### 지역정보
 
-| 기능 | Method | Endpoint |
-|---|---|---|
-| 지역정보 목록 | GET | `/api/locations` |
-| 지도 마커 목록 | GET | `/api/locations/map` |
-| 지역정보 상세 | GET | `/api/locations/{content_id}` |
-
-### 축제
-
-| 기능 | Method | Endpoint |
-|---|---|---|
-| 기간별 축제 일정 | GET | `/api/festivals/calendar` |
-| 다가오는 축제 | GET | `/api/festivals/upcoming` |
+| 기능 | Method | Endpoint | 주요 Query |
+|---|---|---|---|
+| 지역정보 목록 | GET | `/api/locations` | `category`, `keyword`, `sigungu_code`, `page`, `size` |
+| 지도 마커 목록 | GET | `/api/locations/map` | `category`, `keyword`, `sigungu_code`, `limit` |
+| 지역정보 상세 | GET | `/api/locations/{content_id}` | - |
 
 ### 날씨
 
 | 기능 | Method | Endpoint |
 |---|---|---|
-| 현재 날씨 및 여행 적합도 | GET | `/api/weather/current` |
+| 서울 현재 날씨·여행 적합도 | GET | `/api/weather/current` |
 
 ### 커뮤니티
 
-| 기능 | Method | Endpoint |
-|---|---|---|
-| 게시글 목록 | GET | `/api/posts` |
-| 게시글 작성 | POST | `/api/posts` |
-| 게시글 상세 | GET | `/api/posts/{post_id}` |
-| 게시글 수정 | PUT | `/api/posts/{post_id}` |
-| 게시글 삭제 | DELETE | `/api/posts/{post_id}` |
+| 기능 | Method | Endpoint | 설명 |
+|---|---|---|---|
+| 게시글 목록 | GET | `/api/posts` | 카테고리·검색어·태그·정렬·페이지네이션 |
+| 게시글 작성 | POST | `/api/posts` | 비밀번호와 태그 포함 |
+| 게시글 상세 | GET | `/api/posts/{post_id}` | 조회수 1 증가 |
+| 게시글 수정 | PUT | `/api/posts/{post_id}` | 비밀번호 일치 필요 |
+| 게시글 삭제 | DELETE | `/api/posts/{post_id}` | JSON Body에 비밀번호 전달 |
+
+게시글 목록 Query:
+
+```text
+category
+keyword
+tag
+page
+size
+sort=latest|views
+```
 
 ### 챗봇
 
 | 기능 | Method | Endpoint |
 |---|---|---|
-| 지역정보 챗봇 | POST | `/api/chat` |
-
-세부 요청 및 응답 형식은 Swagger 또는 별도의 API 명세 문서를 참고합니다.
+| 지역정보·게시글·날씨 챗봇 | POST | `/api/chat` |
 
 ---
 
-## 💬 챗봇 요청 예시
+## 💬 챗봇 요청과 응답
+
+요청:
 
 ```http
 POST /api/chat
@@ -416,128 +481,241 @@ Content-Type: application/json
 
 ```json
 {
-  "message": "이번 달 서울 축제를 알려줘",
-  "history": []
-}
-```
-
-응답 예시:
-
-```json
-{
-  "answer": "이번 달 서울에서 확인할 수 있는 축제는 다음과 같습니다.",
-  "sources": [
+  "message": "종로구에서 비 오는 날 가기 좋은 문화시설 세 곳 추천해줘",
+  "history": [
     {
-      "type": "festival",
-      "id": "123456",
-      "title": "서울 여름 문화축제",
-      "category": "축제공연행사",
-      "address": "서울특별시 종로구"
+      "role": "user",
+      "content": "오늘 서울 여행을 준비하고 있어"
     }
   ]
 }
 ```
 
-챗봇은 전체 JSON을 OpenAI API에 직접 전달하지 않고, SQLite에서 관련 데이터를 먼저 조회한 뒤 필요한 결과만 전달합니다.
+응답:
+
+```json
+{
+  "answer": "비 오는 날 방문하기 좋은 종로구 문화시설을 안내해드릴게요.",
+  "references": [
+    {
+      "type": "location",
+      "id": "123456",
+      "title": "서울의 문화시설",
+      "category": "문화시설",
+      "address": "서울특별시 종로구",
+      "tel": "02-0000-0000",
+      "latitude": 37.5704,
+      "longitude": 126.9779,
+      "image_url": "https://example.com/image.jpg",
+      "snippet": null,
+      "tags": [],
+      "created_at": null
+    }
+  ]
+}
+```
+
+게시글 참고자료는 `snippet`, `tags`, `created_at`을 포함할 수 있으며 게시글 수정용 비밀번호는 응답에 포함하지 않습니다.
 
 ---
 
-## 🌤️ 여행 적합도
+## 🤖 경량 RAG 동작
 
-현재 날씨 데이터를 기준으로 여행 적합도 점수를 계산합니다.
+### 질문 분석
 
-주요 판단 기준:
+OpenAI Structured Outputs를 사용해 질문을 다음 정보로 구조화합니다.
 
-- 현재 기온
+- 의도
+- 카테고리
+- 서울 자치구
+- 검색 핵심어
+- 요청 결과 개수
+- 날짜 표현
+- 이전 대화에서 이어지는 조건
+
+### 검색
+
+`ChatSearchRepository`가 다음 데이터를 읽기 전용으로 검색합니다.
+
+- 지역정보
+- 축제·공연·행사
+- `모범` 표기가 실제 데이터에 있는 음식점
+- 게시글 제목·본문·카테고리·태그
+- 현재 날씨
+
+### 답변 생성 원칙
+
+- DB 검색 결과를 근거로 답변
+- 실제 결과가 없으면 장소나 게시글을 임의 생성하지 않음
+- 축제 시작일·종료일이 없으면 날짜를 단정하지 않음
+- 일반 음식점을 임의로 모범음식점이라고 안내하지 않음
+- 게시글 비밀번호를 컨텍스트나 응답에 포함하지 않음
+- 최종 답변에 사용한 근거를 `references`로 반환
+
+---
+
+## 🌤️ 여행 적합도 계산
+
+여행 적합도는 OpenAI가 생성하지 않고 백엔드 고정 규칙으로 계산합니다.
+
+평가 요소:
+
+- 기온
 - 강수량
-- 습도
 - 풍속
+- 습도
+- WMO 날씨 현상 코드
 
-결과 등급 예시:
+등급:
 
-| 점수 | 등급 | 설명 |
-|---:|---|---|
-| 70~100 | 좋음 | 야외 활동에 적합 |
-| 40~69 | 보통 | 일부 날씨 요소 주의 |
-| 0~39 | 주의 | 실내 일정 권장 |
-
-여행 적합도는 OpenAI가 임의로 생성하지 않고 백엔드의 고정된 규칙으로 계산합니다.
+| 점수 | 등급 |
+|---:|---|
+| 85~100 | 매우 좋음 |
+| 70~84 | 좋음 |
+| 50~69 | 보통 |
+| 30~49 | 주의 |
+| 0~29 | 나쁨 |
 
 ---
 
 ## 🧪 테스트
 
-구현한 API는 Swagger에서 우선 테스트합니다.
-
-```text
-http://localhost:8000/docs
-```
-
-기능별 확인 항목:
-
-- 정상 요청의 응답 형식
-- 필수 입력값 누락 처리
-- 존재하지 않는 데이터 조회 처리
-- 게시글 비밀번호 불일치 처리
-- 좌표가 없는 지역정보 처리
-- 축제 일정이 없는 기간 처리
-- 외부 날씨 API 오류 처리
-- OpenAI API 오류 및 타임아웃 처리
-- 응답에 게시글 비밀번호가 포함되지 않는지 확인
-
-테스트 코드 실행 명령은 테스트 환경이 구성된 후 작성합니다.
+### 코드 문법 확인
 
 ```sh
-pytest
+python -m compileall app tests
 ```
+
+### OpenAI와 운영 DB를 사용하지 않는 챗봇 단위 테스트
+
+```sh
+python -m unittest discover -s tests -p "test_chat_*_unit.py" -v
+```
+
+### 실제 DB 사전 점검
+
+```sh
+python tests/test_chat_data_precheck.py
+```
+
+### OpenAI 연결 확인
+
+```sh
+python tests/test_openai.py
+```
+
+### 질문 유형 분류 테스트
+
+```sh
+python tests/test_chat_intent_live.py --case location
+python tests/test_chat_intent_live.py --case festival
+python tests/test_chat_intent_live.py --case model_restaurant
+python tests/test_chat_intent_live.py --case post
+python tests/test_chat_intent_live.py --case weather
+```
+
+### DB 검색과 OpenAI 최종 답변 테스트
+
+```sh
+python tests/test_chat_rag_live.py --case location
+python tests/test_chat_rag_live.py --case festival
+python tests/test_chat_rag_live.py --case post
+python tests/test_chat_rag_live.py --case weather
+```
+
+### 실행 중인 FastAPI 엔드포인트 테스트
+
+첫 번째 터미널:
+
+```sh
+python -m uvicorn app.main:app --reload
+```
+
+두 번째 터미널:
+
+```sh
+python tests/test_chat_api_live.py --case location
+python tests/test_chat_api_live.py --case post
+python tests/test_chat_api_live.py --case weather
+```
+
+### 게시글 Repository 테스트
+
+현재 `test_post_repository.py`는 pytest를 사용합니다.
+
+```sh
+pip install pytest
+pytest tests/test_post_repository.py
+```
+
+> 실제 OpenAI 테스트는 API 토큰을 사용하므로 필요한 케이스만 실행합니다.
 
 ---
 
-## 🔗 프론트엔드 연결
+## 🚢 Render 배포
 
-로컬 개발 환경:
+### 기본 설정
 
-```text
-Frontend: http://localhost:5173
-Backend:  http://localhost:8000
-Swagger:  http://localhost:8000/docs
-```
+| 설정 | 값 |
+|---|---|
+| Branch | `main` |
+| Runtime | Python |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
 
-프론트엔드의 `.env`에는 다음 주소를 사용합니다.
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-배포 환경에서는 Render에서 생성된 백엔드 URL을 사용합니다.
+### 환경변수 예시
 
 ```env
-VITE_API_BASE_URL=https://백엔드-서비스명.onrender.com
+APP_NAME=LocalHub API
+APP_VERSION=0.1.0
+ENVIRONMENT=production
+DEBUG=false
+
+API_PREFIX=/api
+DATABASE_URL=sqlite:///./data/localhub.db
+
+CORS_ORIGINS=["https://실제-프론트엔드.netlify.app"]
+
+OPENAI_API_KEY=실제_OpenAI_API_Key
+OPENAI_MODEL=gpt-5-mini
+
+WEATHER_API_BASE_URL=https://api.open-meteo.com/v1/forecast
+TARGET_REGION=서울
 ```
+
+### 배포 확인
+
+- `/`
+- `/api/health`
+- `/docs`
+- `/api/locations`
+- `/api/locations/map`
+- `/api/weather/current`
+- 게시글 CRUD
+- `/api/chat`
+- Netlify 프론트에서 CORS 오류 없이 호출되는지 확인
 
 ---
 
-## 🤝 협업 규칙
+## ⚠️ SQLite 배포 주의사항
 
-브랜치, 커밋, Merge Request 및 민감정보 관리 규칙은 별도 문서를 참고합니다.
+SQLite는 파일 기반 데이터베이스입니다.
 
-[협업 및 Git 규칙 보기](./CONTRIBUTING.md)
+Render의 영구 디스크가 없는 환경에서는 재시작·재배포 시 실행 중 추가한 게시글과 DB 변경사항이 사라질 수 있습니다.
 
-주요 원칙:
+교육·발표용 배포 시:
 
-- `main` 브랜치에 직접 Push하지 않습니다.
-- 기능별 브랜치에서 작업합니다.
-- 작업 시작 전 `main`을 최신화합니다.
-- 커밋 메시지는 `type(scope): 작업 내용` 형식을 사용합니다.
-- 작업 완료 후 Merge Request를 생성합니다.
-- `.env`, API Key 및 비밀번호를 커밋하지 않습니다.
-- API 요청·응답 형식 변경 전 팀원과 공유합니다.
+- 배포 전 지역정보 적재 상태 확인
+- 발표 직전 불필요한 재배포 지양
+- SQLite 파일 또는 원본 JSON을 별도 보관
+- DB가 사라진 경우 지역정보 재적재
+- 게시글 영구 보존이 필요하면 Render Persistent Disk 또는 외부 DB 사용
 
 ---
 
 ## 🔐 보안 규칙
 
-다음 파일과 정보는 Git에 올리지 않습니다.
+Git에 올리지 않는 항목:
 
 ```text
 .env
@@ -548,110 +726,98 @@ __pycache__/
 *.sqlite
 *.sqlite3
 실제 API Key
-비밀번호 및 인증정보
 ```
 
-커밋 전 반드시 확인합니다.
+커밋 전 확인:
 
 ```sh
 git status
 ```
 
-`.env`가 표시되는 경우 `.gitignore`를 확인합니다.
+민감정보가 원격 저장소에 올라간 경우 파일만 삭제하지 말고 해당 키를 폐기하고 새 키를 발급합니다.
 
-```gitignore
-.env
-.env.local
-.env.*.local
-!.env.example
-```
-
-민감정보가 이미 원격 저장소에 Push된 경우 파일만 삭제하지 않고 해당 API Key를 폐기한 뒤 새로 발급해야 합니다.
+현재 교육용 게시글 비밀번호 방식은 실제 서비스 보안 요구사항을 충족하지 않으므로 운영 환경에 그대로 사용하지 않습니다.
 
 ---
 
-## 🚢 Deployment
+## ⚠️ 데이터 제한
 
-백엔드는 Render를 통해 배포합니다.
+- `source_created_at`, `source_modified_at`은 TourAPI 원본 등록·수정 시각입니다.
+- 위 두 값은 축제 개최 시작일·종료일이 아닙니다.
+- 실제 행사 일정 필드가 없어 축제 캘린더 API를 제공하지 않습니다.
+- 모범음식점 검색은 DB의 장소명·카테고리·분류·원본 파일명에 `모범` 표기가 확인된 경우에만 결과를 반환합니다.
+- 이미지가 없는 지역정보는 `first_image`, `thumbnail_image`가 `null`일 수 있습니다.
+- 지도 마커 API는 위도와 경도가 있는 데이터만 반환합니다.
 
-### Render 기본 설정
+---
 
-| 설정 | 값 |
+## 🌿 협업 규칙
+
+### 브랜치
+
+```text
+feature/기능명
+fix/수정내용
+docs/문서명
+chore/설정내용
+deploy/배포대상
+```
+
+### 커밋
+
+```text
+type(scope): 작업 내용
+```
+
+예시:
+
+```text
+feat(location): 서울 지역정보 목록과 지도 API 구현
+feat(post): 익명 게시글 CRUD와 태그 검색 구현
+feat(weather): Open-Meteo 날씨와 여행 적합도 추가
+feat(chat): 질문 분석과 경량 RAG 검색 구현
+fix(chat): 장소 참고 정보 이미지 URL 반환
+docs(readme): 최종 구현 내용과 실행 방법 반영
+deploy(render): Render 실행 설정 추가
+```
+
+자세한 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md)를 참고합니다.
+
+---
+
+## 📄 데이터 출처와 라이선스
+
+본 서비스는 한국관광공사 TourAPI 4.0의 서울 지역정보를 활용합니다.
+
+| 항목 | 내용 |
 |---|---|
-| Branch | `main` |
-| Runtime | Python |
-| Build Command | `pip install -r requirements.txt` |
-| Start Command | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| 제공 기관 | 한국관광공사 |
+| 데이터명 | 국문 관광정보 서비스 TourAPI 4.0 |
+| 수집 지역 | 서울 |
+| 전체 데이터 | 8,150건 |
+| 라이선스 | 공공누리 제3유형 — 출처 표시, 변경 금지 |
 
-### Render 환경변수
+카테고리별 원본 데이터:
 
-```text
-DATABASE_URL
-OPENAI_API_KEY
-WEATHER_API_KEY
-CORS_ORIGINS
-```
+| 파일 | 건수 |
+|---|---:|
+| 서울_관광지.json | 783 |
+| 서울_문화시설.json | 566 |
+| 서울_축제공연행사.json | 201 |
+| 서울_여행코스.json | 51 |
+| 서울_레포츠.json | 126 |
+| 서울_숙박.json | 423 |
+| 서울_쇼핑.json | 4,368 |
+| **합계** | **6518** |
 
-실제 값은 Render의 Environment 설정에서 등록하며 Git 저장소에 작성하지 않습니다.
-
-### 배포 후 확인
-
-- Render 서비스 URL 정상 접속
-- `/api/health` 정상 응답
-- `/docs` 접속 가능 여부
-- 지역정보 API 정상 동작
-- 게시글 CRUD 정상 동작
-- 축제 일정 API 정상 동작
-- 날씨 API 정상 동작
-- 챗봇 API 정상 동작
-- Netlify 프론트엔드에서 CORS 오류 없이 호출되는지 확인
-
----
-
-## ⚠️ SQLite 배포 주의사항
-
-SQLite는 파일 기반 데이터베이스입니다.
-
-Render 환경이 재시작되거나 다시 배포될 경우 실행 중 추가된 데이터가 유지되지 않을 수 있으므로 다음 사항을 고려합니다.
-
-- 서버 시작 시 DB가 없으면 테이블 자동 생성
-- 지역정보 초기 데이터가 없으면 JSON 재적재
-- 최종 발표 전 불필요한 재배포 지양
-- 제출용 SQLite DB 파일은 별도 산출물로 관리
-- 게시글 영구 보존 한계는 기능 명세서에 작성
-
----
-
-## 👥 Team
-
-| 역할 | 담당자 | 주요 업무 |
-|---|---|---|
-| Backend |  | FastAPI, SQLite, 지역정보 및 게시글 API |
-| Frontend |  | Vue 화면 및 API 연동 |
-| Chatbot |  | OpenAI API, 검색 및 프롬프트 |
-| PM·문서 |  | 일정, 명세서, 발표 자료 |
-
----
-
-## 📄 Data Source and License
-
-본 서비스는 한국관광공사 TourAPI 4.0의 서울 지역 데이터를 활용합니다.
+출처 표시:
 
 ```text
-데이터 제공기관: 한국관광공사
-데이터명: 국문 관광정보 서비스 TourAPI 4.0
-수집 지역: 서울
+이 서비스는 한국관광공사 TourAPI 4.0의 관광정보를 활용하였습니다.
+출처: 한국관광공사
 라이선스: 공공누리 제3유형
 ```
 
-서비스 화면과 기능 명세서에 데이터 출처 및 라이선스를 표시합니다.
-
-외부 날씨 API를 사용하는 경우 다음 내용을 별도로 기록합니다.
-
-```text
-날씨 데이터 제공기관
-API명
-데이터 제공 범위
-라이선스 또는 이용 조건
-API 조회 시각
-```
+- 공공데이터포털: https://www.data.go.kr/data/15101578/openapi.do
+- 공공누리 제3유형: https://www.kogl.or.kr/info/licenseTypeView.do?licenseType=3
+- LocalHub GitHub: https://github.com/LocalHub-S19
